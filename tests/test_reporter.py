@@ -53,4 +53,7 @@ def test_send_email_calls_smtp(mock_smtp_class):
         password="pass",
         recipients=["c@d.com"],
     )
+    mock_server.ehlo.assert_called_once()
+    mock_server.starttls.assert_called_once()
+    mock_server.login.assert_called_once_with("a@b.com", "pass")
     mock_server.sendmail.assert_called_once()
