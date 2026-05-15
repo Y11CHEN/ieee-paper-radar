@@ -35,7 +35,7 @@ def summarize_papers(papers: list[dict], api_key: str) -> list[dict]:
     except Exception as e:
         logger.error("Claude summarize failed: %s", e)
         return [
-            {**p, "contribution": "Summary unavailable.", "stars": "⭐" if p["venue"] in ("ECCE", "APEC") else "⭐⭐"}
+            {**p, "contribution": "Summary unavailable.", "stars": "⭐⭐" if p["venue"] in ("TPEL", "TIE") else "⭐"}
             for p in papers
         ]
 
