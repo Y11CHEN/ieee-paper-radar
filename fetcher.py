@@ -1,4 +1,5 @@
 import logging
+import time
 import requests
 from config import IEEE_API_BASE, VENUES, KEYWORDS
 
@@ -55,3 +56,32 @@ def fetch_papers_ieee(start_date: str, end_date: str, api_key: str) -> list[dict
                 break
 
     return all_papers
+
+
+_SS_BASE = "https://api.semanticscholar.org/graph/v1/paper"
+
+
+def enrich_with_semantic_scholar(papers: list[dict]) -> list[dict]:
+    """Adds citation_count to each paper by querying Semantic Scholar. Mutates in place."""
+    for paper in papers:
+        doi = paper.get("doi", "")
+        if not doi:
+            continue
+        try:
+            resp = requests.get(f"{_SS_BASE}/DOI:{doi}", params={"fields": "citationCount"}, timeout=15)
+            if resp.status_code == 200:
+                paper["citation_count"] = resp.json().get("citationCount", 0)
+            elif resp.status_code == 404:
+                resp2 = requests.get(
+                    f"{_SS_BASE}/search",
+                    params={"query": paper["title"], "fields": "citationCount", "limit": 1},
+                    timeout=15,
+                )
+                if resp2.status_code == 200:
+                    data = resp2.json().get("data", [])
+                    if data:
+                        paper["citation_count"] = data[0].get("citationCount", 0)
+            time.sleep(0.1)
+        except Exception as e:
+            logger.warning("Semantic Scholar lookup failed for %s: %s", doi, e)
+    return papers
