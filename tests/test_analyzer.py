@@ -45,3 +45,34 @@ def test_summarize_papers_falls_back_on_api_error(mock_cls):
     result = summarize_papers(SAMPLE_PAPERS, api_key="sk-ant-test")
     assert len(result) == 1
     assert result[0]["contribution"] == "Summary unavailable."
+
+
+from analyzer import analyze_trends
+
+HISTORICAL_PAPERS = [
+    {"title": "SC Converter 48V Bus 2023", "venue": "TPEL", "year": 2023},
+    {"title": "Resonant SC for Rack 2022", "venue": "ECCE", "year": 2022},
+]
+
+
+@patch("analyzer.anthropic.Anthropic")
+def test_analyze_trends_returns_text(mock_cls):
+    mock_client = MagicMock()
+    mock_cls.return_value = mock_client
+    mock_client.messages.create.return_value = MagicMock(
+        content=[MagicMock(text="**Evolution:** SC converters have moved from...\n\n**Direction 1:** Soft charging...")]
+    )
+
+    result = analyze_trends(SAMPLE_PAPERS, HISTORICAL_PAPERS, api_key="sk-ant-test")
+    assert isinstance(result, str)
+    assert len(result) > 20
+
+
+@patch("analyzer.anthropic.Anthropic")
+def test_analyze_trends_handles_api_error(mock_cls):
+    mock_client = MagicMock()
+    mock_cls.return_value = mock_client
+    mock_client.messages.create.side_effect = Exception("API error")
+
+    result = analyze_trends(SAMPLE_PAPERS, HISTORICAL_PAPERS, api_key="sk-ant-test")
+    assert "unavailable" in result.lower()
