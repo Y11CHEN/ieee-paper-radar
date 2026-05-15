@@ -10,7 +10,7 @@ SMTP_HOST: str = os.getenv("SMTP_HOST", "smtp.gmail.com")
 SMTP_PORT: int = int(os.getenv("SMTP_PORT", "587"))
 SENDER_EMAIL: str = os.environ["SENDER_EMAIL"]
 SENDER_PASSWORD: str = os.environ["SENDER_PASSWORD"]
-RECIPIENT_EMAILS: list[str] = os.environ["RECIPIENT_EMAILS"].split(",")
+RECIPIENT_EMAILS: list[str] = [e.strip() for e in os.environ["RECIPIENT_EMAILS"].split(",")]
 
 # Search parameters — edit KEYWORDS here to change what papers are tracked
 KEYWORDS: list[str] = ["switched capacitor", "data center", "48V bus", "rack power"]
