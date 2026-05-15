@@ -1,5 +1,6 @@
 import sqlite3
 import pytest
+from datetime import datetime
 from db import init_db, insert_papers, get_known_dois, get_recent_papers
 
 
@@ -36,9 +37,10 @@ def test_insert_ignores_duplicates(conn):
 
 
 def test_get_recent_papers(conn):
+    current_year = datetime.now().year
     papers = [
-        {"doi": "10.1109/TPEL.2024.001", "title": "Recent Paper", "abstract": "SC for DC", "venue": "TPEL", "year": 2024, "citation_count": 3},
-        {"doi": "10.1109/TPEL.2020.001", "title": "Old Paper", "abstract": "Old work", "venue": "TPEL", "year": 2020, "citation_count": 50},
+        {"doi": "10.1109/TPEL.2024.001", "title": "Recent Paper", "abstract": "SC for DC", "venue": "TPEL", "year": current_year, "citation_count": 3},
+        {"doi": "10.1109/TPEL.2020.001", "title": "Old Paper", "abstract": "Old work", "venue": "TPEL", "year": current_year - 5, "citation_count": 50},
     ]
     insert_papers(conn, papers)
     recent = get_recent_papers(conn, years=2)

@@ -14,6 +14,7 @@ def init_db(conn: sqlite3.Connection) -> None:
             fetched_at TEXT DEFAULT (datetime('now'))
         )
     """)
+    conn.execute("CREATE INDEX IF NOT EXISTS idx_papers_year ON papers(year)")
     conn.commit()
 
 
@@ -32,10 +33,11 @@ def get_known_dois(conn: sqlite3.Connection) -> set[str]:
 
 
 def get_recent_papers(conn: sqlite3.Connection, years: int = 2) -> list[dict]:
+    # cutoff_year is inclusive: years=2 in 2026 returns papers from 2024 onward
     cutoff_year = datetime.now().year - years
     cursor = conn.execute(
-        "SELECT doi, title, abstract, venue, year, citation_count FROM papers WHERE year >= ?",
+        "SELECT doi, title, abstract, venue, year, citation_count, fetched_at FROM papers WHERE year >= ?",
         (cutoff_year,),
     )
-    cols = ["doi", "title", "abstract", "venue", "year", "citation_count"]
+    cols = ["doi", "title", "abstract", "venue", "year", "citation_count", "fetched_at"]
     return [dict(zip(cols, row)) for row in cursor.fetchall()]
