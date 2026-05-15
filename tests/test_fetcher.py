@@ -34,7 +34,7 @@ def test_fetch_papers_ieee_returns_papers(mock_get):
     assert len(papers) == 2
     assert papers[0]["doi"] == "10.1109/TPEL.2024.001"
     assert papers[0]["venue"] == "TPEL"
-    assert papers[1]["venue"] == "TIE"
+    assert papers[1]["venue"] == "TPEL"
 
 
 @patch("fetcher.requests.get")

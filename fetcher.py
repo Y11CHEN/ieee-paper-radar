@@ -1,25 +1,16 @@
 import logging
 import requests
-from config import IEEE_API_BASE, VENUES
+from config import IEEE_API_BASE, VENUES, KEYWORDS
 
 logger = logging.getLogger(__name__)
-
-_VENUE_LOOKUP: dict[str, str] = {full.lower(): abbrev for abbrev, full in VENUES.items()}
-
-
-def _match_venue(publication_title: str) -> str:
-    title_lower = publication_title.lower()
-    for fragment, abbrev in _VENUE_LOOKUP.items():
-        if fragment in title_lower:
-            return abbrev
-    return publication_title[:10]
 
 
 def fetch_papers_ieee(start_date: str, end_date: str, api_key: str) -> list[dict]:
     """Fetch papers from IEEE Xplore for all configured venues."""
     all_papers: list[dict] = []
     seen_dois: set[str] = set()
-    query = "switched capacitor AND (data center OR server OR rack OR 48V)"
+    query_terms = " OR ".join(f'"{k}"' for k in KEYWORDS)
+    query = f"({query_terms})"
 
     for abbrev, pub_title in VENUES.items():
         start_record = 1
@@ -47,17 +38,15 @@ def fetch_papers_ieee(start_date: str, end_date: str, api_key: str) -> list[dict
                     if doi in seen_dois:
                         continue
                     seen_dois.add(doi)
-                    pub_title_article = a.get("publication_title", "")
-                    venue = _match_venue(pub_title_article) if pub_title_article else abbrev
                     all_papers.append({
                         "doi": doi,
                         "title": a.get("title", ""),
                         "abstract": a.get("abstract", ""),
-                        "venue": venue,
+                        "venue": abbrev,
                         "year": int(a.get("publication_year", 0)),
                         "citation_count": 0,
                     })
-                total = int(data.get("total_records", 0))
+                total = int(data.get("total_records", len(articles)))
                 if start_record + len(articles) - 1 >= total or not articles:
                     break
                 start_record += len(articles)
