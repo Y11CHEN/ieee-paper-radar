@@ -1,7 +1,7 @@
 import logging
 import time
 import requests
-from config import IEEE_API_BASE, VENUES, KEYWORDS
+from config import IEEE_API_BASE, VENUES, KEYWORDS_REQUIRED, KEYWORDS_CONTEXT
 
 logger = logging.getLogger(__name__)
 
@@ -10,7 +10,7 @@ def fetch_papers_ieee(start_date: str, end_date: str, api_key: str) -> list[dict
     """Fetch papers from IEEE Xplore for all configured venues."""
     all_papers: list[dict] = []
     seen_dois: set[str] = set()
-    query_terms = " OR ".join(f'"{k}"' for k in KEYWORDS)
+    query_terms = " OR ".join(f'"{k}"' for k in KEYWORDS_REQUIRED + KEYWORDS_CONTEXT)
     query = f"({query_terms})"
 
     for abbrev, pub_title in VENUES.items():
