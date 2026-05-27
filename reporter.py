@@ -1,3 +1,4 @@
+import html
 import smtplib
 import logging
 from email.mime.multipart import MIMEMultipart
@@ -11,9 +12,9 @@ def _rec_group_html(papers: list[dict], label: str, color: str) -> str:
         return ""
     items = "".join(
         f"""<div style="margin-bottom:10px;padding:10px;background:#f9f9f9;border-left:3px solid {color};">
-          <p style="margin:0 0 2px 0;font-size:14px;font-weight:bold;">{p['stars']} {p['title']}</p>
-          <p style="margin:0 0 2px 0;color:#666;font-size:11px;">{p['venue']} &middot; {p['year']}</p>
-          <p style="margin:0;font-size:12px;color:#444;">{p.get('reason', '')}</p>
+          <p style="margin:0 0 2px 0;font-size:14px;font-weight:bold;">{p['stars']} {html.escape(p['title'])}</p>
+          <p style="margin:0 0 2px 0;color:#666;font-size:11px;">{html.escape(p['venue'])} &middot; {p['year']}</p>
+          <p style="margin:0;font-size:12px;color:#444;">{html.escape(p.get('reason', ''))}</p>
         </div>"""
         for p in papers
     )
