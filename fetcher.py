@@ -10,8 +10,9 @@ def fetch_papers_ieee(start_date: str, end_date: str, api_key: str) -> list[dict
     """Fetch papers from IEEE Xplore for all configured venues."""
     all_papers: list[dict] = []
     seen_dois: set[str] = set()
-    query_terms = " OR ".join(f'"{k}"' for k in KEYWORDS_REQUIRED + KEYWORDS_CONTEXT)
-    query = f"({query_terms})"
+    required = " AND ".join(f'"{k}"' for k in KEYWORDS_REQUIRED)
+    context  = " OR ".join(f'"{k}"' for k in KEYWORDS_CONTEXT)
+    query    = f"({required}) AND ({context})"
 
     for abbrev, pub_title in VENUES.items():
         start_record = 1
