@@ -1,6 +1,15 @@
 import json
 import logging
-import anthropic
+from google import genai
+
+
+def _parse_json_array(text: str) -> list:
+    """Extract the first JSON array from a response that may contain markdown fences or prose."""
+    start = text.find("[")
+    end = text.rfind("]") + 1
+    if start == -1 or end == 0:
+        raise ValueError("No JSON array found in response")
+    return json.loads(text[start:end])
 
 logger = logging.getLogger(__name__)
 
@@ -24,16 +33,15 @@ def summarize_papers(papers: list[dict], api_key: str) -> list[dict]:
         for p in papers
     )
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = genai.Client(api_key=api_key)
     try:
-        msg = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=4096,
-            messages=[{"role": "user", "content": _SUMMARIZE_PROMPT.format(papers_text=papers_text)}],
+        resp = client.models.generate_content(
+            model="gemini-2.5-pro",
+            contents=_SUMMARIZE_PROMPT.format(papers_text=papers_text),
         )
-        summaries = json.loads(msg.content[0].text.strip())
+        summaries = _parse_json_array(resp.text)
     except Exception as e:
-        logger.error("Claude summarize failed: %s", e)
+        logger.error("Gemini summarize failed: %s", e)
         return [
             {**p, "contribution": "Summary unavailable.", "stars": "⭐⭐" if p["venue"] in ("TPEL", "TIE") else "⭐"}
             for p in papers
@@ -80,23 +88,19 @@ def analyze_trends(new_papers: list[dict], historical_papers: list[dict], api_ke
         for p in sorted(historical_papers, key=lambda x: x["year"], reverse=True)[:80]
     )
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = genai.Client(api_key=api_key)
     try:
-        msg = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=2048,
-            messages=[{
-                "role": "user",
-                "content": _TREND_PROMPT.format(
-                    new_papers_text=new_text,
-                    hist_count=len(historical_papers),
-                    hist_papers_text=hist_text,
-                ),
-            }],
+        resp = client.models.generate_content(
+            model="gemini-2.5-pro",
+            contents=_TREND_PROMPT.format(
+                new_papers_text=new_text,
+                hist_count=len(historical_papers),
+                hist_papers_text=hist_text,
+            ),
         )
-        return msg.content[0].text.strip()
+        return resp.text.strip()
     except Exception as e:
-        logger.error("Claude trend analysis failed: %s", e)
+        logger.error("Gemini trend analysis failed: %s", e)
         return "Trend analysis unavailable this week due to an API error."
 
 
@@ -133,19 +137,18 @@ def recommend_papers(papers: list[dict], research_profile: str, api_key: str) ->
         for p in papers
     )
 
-    client = anthropic.Anthropic(api_key=api_key)
+    client = genai.Client(api_key=api_key)
     try:
-        msg = client.messages.create(
-            model="claude-sonnet-4-6",
-            max_tokens=2048,
-            messages=[{"role": "user", "content": _RECOMMEND_PROMPT.format(
+        resp = client.models.generate_content(
+            model="gemini-2.5-pro",
+            contents=_RECOMMEND_PROMPT.format(
                 research_profile=research_profile,
                 papers_text=papers_text,
-            )}],
+            ),
         )
-        recommendations = json.loads(msg.content[0].text.strip())
+        recommendations = _parse_json_array(resp.text)
     except Exception as e:
-        logger.error("Claude recommend failed: %s", e)
+        logger.error("Gemini recommend failed: %s", e)
         return [{**p, "tier": "值得一读", "reason": ""} for p in papers]
 
     doi_map = {r["doi"]: r for r in recommendations}

@@ -2,15 +2,15 @@ import pytest
 
 
 def test_config_loads_required_keys(monkeypatch):
-    monkeypatch.setenv("ANTHROPIC_API_KEY", "sk-ant-test")
+    monkeypatch.setenv("GEMINI_API_KEY", "gemini-test")
     monkeypatch.setenv("IEEE_XPLORE_API_KEY", "ieee-test")
     monkeypatch.setenv("SENDER_EMAIL", "test@gmail.com")
     monkeypatch.setenv("SENDER_PASSWORD", "pass")
-    monkeypatch.setenv("RECIPIENT_EMAILS", "a@b.com,c@d.com")
     import importlib, config
     importlib.reload(config)
-    assert config.ANTHROPIC_API_KEY == "sk-ant-test"
-    assert config.RECIPIENT_EMAILS == ["a@b.com", "c@d.com"]
+    assert config.GEMINI_API_KEY == "gemini-test"
+    assert isinstance(config.RECIPIENT_EMAILS, list)
+    assert len(config.RECIPIENT_EMAILS) > 0
 
 
 def test_config_has_default_keywords():

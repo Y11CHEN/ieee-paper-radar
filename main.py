@@ -61,9 +61,9 @@ def run_weekly() -> None:
         if new_papers:
             insert_papers(conn, new_papers)
 
-        summarized   = summarize_papers(new_papers, config.ANTHROPIC_API_KEY)
-        recommended  = recommend_papers(summarized, config.RESEARCH_PROFILE, config.ANTHROPIC_API_KEY)
-        trend_text   = analyze_trends(new_papers, historical, config.ANTHROPIC_API_KEY)
+        summarized   = summarize_papers(new_papers, config.GEMINI_API_KEY)
+        recommended  = recommend_papers(summarized, config.RESEARCH_PROFILE, config.GEMINI_API_KEY)
+        trend_text   = analyze_trends(new_papers, historical, config.GEMINI_API_KEY)
 
         row = conn.execute("SELECT COUNT(*), MIN(fetched_at) FROM papers").fetchone()
         total = row[0]
