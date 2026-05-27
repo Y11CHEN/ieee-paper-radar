@@ -14,7 +14,6 @@ RECIPIENT_EMAILS: list[str] = [e.strip() for e in os.environ["RECIPIENT_EMAILS"]
 
 KEYWORDS_REQUIRED: list[str] = ["switched capacitor"]
 KEYWORDS_CONTEXT: list[str] = ["data center", "48V bus", "rack power", "server rack"]
-KEYWORDS: list[str] = KEYWORDS_REQUIRED + KEYWORDS_CONTEXT  # For backward compatibility
 
 VENUES: dict[str, str] = {
     "TPEL": "IEEE Transactions on Power Electronics",
