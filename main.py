@@ -6,7 +6,7 @@ from datetime import datetime, timedelta
 import config
 from db import init_db, insert_papers, get_known_dois, get_recent_papers
 from fetcher import fetch_papers_ieee, enrich_with_semantic_scholar
-from analyzer import summarize_papers, analyze_trends
+from analyzer import summarize_papers, analyze_trends, recommend_papers
 from reporter import build_email_html, send_email
 
 logging.basicConfig(
@@ -61,8 +61,9 @@ def run_weekly() -> None:
         if new_papers:
             insert_papers(conn, new_papers)
 
-        summarized = summarize_papers(new_papers, config.ANTHROPIC_API_KEY)
-        trend_text = analyze_trends(new_papers, historical, config.ANTHROPIC_API_KEY)
+        summarized   = summarize_papers(new_papers, config.ANTHROPIC_API_KEY)
+        recommended  = recommend_papers(summarized, config.RESEARCH_PROFILE, config.ANTHROPIC_API_KEY)
+        trend_text   = analyze_trends(new_papers, historical, config.ANTHROPIC_API_KEY)
 
         row = conn.execute("SELECT COUNT(*), MIN(fetched_at) FROM papers").fetchone()
         total = row[0]
@@ -70,7 +71,7 @@ def run_weekly() -> None:
         since_date = since_raw[:10] if isinstance(since_raw, str) else "N/A"
 
     html = build_email_html(
-        new_papers=summarized,
+        new_papers=recommended,
         trend_text=trend_text,
         db_stats={"total": total, "since": since_date},
         week_label=_week_label(),

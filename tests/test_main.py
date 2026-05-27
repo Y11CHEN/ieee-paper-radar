@@ -4,6 +4,7 @@ from main import run_weekly, run_init
 
 @patch("main.send_email")
 @patch("main.analyze_trends", return_value="Direction 1: soft charging.")
+@patch("main.recommend_papers")
 @patch("main.summarize_papers")
 @patch("main.enrich_with_semantic_scholar")
 @patch("main.fetch_papers_ieee")
@@ -14,7 +15,7 @@ from main import run_weekly, run_init
 @patch("main.sqlite3.connect")
 def test_run_weekly_sends_email(
     mock_connect, mock_init_db, mock_known, mock_recent,
-    mock_insert, mock_fetch, mock_enrich, mock_summarize, mock_trends, mock_send
+    mock_insert, mock_fetch, mock_enrich, mock_summarize, mock_recommend, mock_trends, mock_send
 ):
     mock_conn = MagicMock()
     mock_conn.execute.return_value.fetchone.return_value = (10, "2024-01-01T00:00:00")
@@ -24,11 +25,16 @@ def test_run_weekly_sends_email(
     mock_connect.return_value = ctx
 
     paper = {"doi": "10.1109/TPEL.2024.001", "title": "SC Paper", "abstract": "...", "venue": "TPEL", "year": 2024, "citation_count": 0}
+    summarized = [{**paper, "contribution": "Great result.", "stars": "⭐⭐"}]
+    recommended = [{**summarized[0], "tier": "强烈推荐", "reason": "直接相关"}]
+
     mock_fetch.return_value = [paper]
     mock_enrich.return_value = [paper]
-    mock_summarize.return_value = [{**paper, "contribution": "Great result.", "stars": "⭐⭐"}]
+    mock_summarize.return_value = summarized
+    mock_recommend.return_value = recommended
 
     run_weekly()
+    mock_recommend.assert_called_once()
     mock_send.assert_called_once()
 
 
