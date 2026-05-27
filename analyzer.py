@@ -115,7 +115,7 @@ For each paper, assign exactly one tier based on two dimensions:
 
 Tier definitions:
 - "强烈推荐": High technical impact AND directly relevant to the student's research profile
-- "值得一读": High technical impact OR relevant to the student's research profile (not both required)
+- "值得一读": Meets exactly one of the two criteria above (high impact but not directly relevant, or relevant but not high impact)
 - "跳过": Incremental contribution and low personal relevance
 
 Return a JSON array only — no markdown, no prose, no code fences:
@@ -153,7 +153,7 @@ def recommend_papers(papers: list[dict], research_profile: str, api_key: str) ->
         {
             **p,
             "tier": doi_map.get(p["doi"], {}).get("tier", "值得一读"),
-            "reason": doi_map.get(p["doi"], {}).get("reason", ""),
+            "reason": doi_map.get(p["doi"], {}).get("reason", "推荐理由暂不可用"),
         }
         for p in papers
     ]
