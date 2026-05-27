@@ -98,3 +98,62 @@ def analyze_trends(new_papers: list[dict], historical_papers: list[dict], api_ke
     except Exception as e:
         logger.error("Claude trend analysis failed: %s", e)
         return "Trend analysis unavailable this week due to an API error."
+
+
+_RECOMMEND_PROMPT = """\
+You are helping a power electronics PhD student identify must-read papers each week.
+
+Student research profile:
+{research_profile}
+
+Papers this week (already summarized):
+{papers_text}
+
+For each paper, assign exactly one tier based on two dimensions:
+- Technical impact: venue tier (TPEL/TIE journal papers outrank ECCE/APEC conference papers), citation count, and whether the contribution is novel or incremental
+- Personal relevance: match to the student's specific research profile above
+
+Tier definitions:
+- "强烈推荐": High technical impact AND directly relevant to the student's research profile
+- "值得一读": High technical impact OR relevant to the student's research profile (not both required)
+- "跳过": Incremental contribution and low personal relevance
+
+Return a JSON array only — no markdown, no prose, no code fences:
+[{{"doi": "<doi>", "tier": "<强烈推荐|值得一读|跳过>", "reason": "<one sentence in Chinese explaining why>"}}]
+"""
+
+
+def recommend_papers(papers: list[dict], research_profile: str, api_key: str) -> list[dict]:
+    if not papers:
+        return []
+
+    papers_text = "\n\n".join(
+        f"DOI: {p['doi']}\nTitle: {p['title']}\nVenue: {p['venue']} {p['stars']}\n"
+        f"Summary: {p['contribution']}\nCitations: {p['citation_count']}"
+        for p in papers
+    )
+
+    client = anthropic.Anthropic(api_key=api_key)
+    try:
+        msg = client.messages.create(
+            model="claude-sonnet-4-6",
+            max_tokens=2048,
+            messages=[{"role": "user", "content": _RECOMMEND_PROMPT.format(
+                research_profile=research_profile,
+                papers_text=papers_text,
+            )}],
+        )
+        recommendations = json.loads(msg.content[0].text.strip())
+    except Exception as e:
+        logger.error("Claude recommend failed: %s", e)
+        return [{**p, "tier": "值得一读", "reason": ""} for p in papers]
+
+    doi_map = {r["doi"]: r for r in recommendations}
+    return [
+        {
+            **p,
+            "tier": doi_map.get(p["doi"], {}).get("tier", "值得一读"),
+            "reason": doi_map.get(p["doi"], {}).get("reason", ""),
+        }
+        for p in papers
+    ]
