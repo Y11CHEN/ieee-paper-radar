@@ -1,8 +1,8 @@
-name: Weekly IEEE Paper Radar
+  name: Weekly IEEE Paper Radar
 
-"on":
+  "on":
     schedule:
-      - cron: '0 0 * * 1'   # 每周一 UTC 00:00（北京时间 08:00）
+      - cron: '0 0 * * 1'
     workflow_dispatch:
 
   permissions:
@@ -34,10 +34,10 @@ name: Weekly IEEE Paper Radar
             SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
           run: |
             if [ ! -f papers.db ]; then
-              echo "papers.db not found —running init to seed 2 years of history..."
+              echo "papers.db not found, running init..."
               python main.py --init
             else
-              echo "papers.db found —skipping init."
+              echo "papers.db found, skipping init."
             fi
 
         - name: Run weekly digest and send email
