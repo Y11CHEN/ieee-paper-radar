@@ -1,0 +1,57 @@
+name: Weekly IEEE Paper Radar
+
+  on:
+    schedule:
+      - cron: '0 0 * * 1'   # 每周一 UTC 00:00（北京时间 08:00）
+    workflow_dispatch:
+
+  permissions:
+    contents: write
+
+  jobs:
+    digest:
+      runs-on: ubuntu-latest
+
+      steps:
+        - name: Checkout repository
+          uses: actions/checkout@v4
+          with:
+            fetch-depth: 0
+
+        - name: Set up Python 3.12
+          uses: actions/setup-python@v5
+          with:
+            python-version: '3.12'
+
+        - name: Install dependencies
+          run: pip install -r requirements.txt
+
+        - name: Initialize DB if first run
+          env:
+            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+            IEEE_XPLORE_API_KEY: ${{ secrets.IEEE_XPLORE_API_KEY }}
+            SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+            SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+          run: |
+            if [ ! -f papers.db ]; then
+              echo "papers.db not found —running init to seed 2 years of history..."
+              python main.py --init
+            else
+              echo "papers.db found —skipping init."
+            fi
+
+        - name: Run weekly digest and send email
+          env:
+            GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+            IEEE_XPLORE_API_KEY: ${{ secrets.IEEE_XPLORE_API_KEY }}
+            SENDER_EMAIL: ${{ secrets.SENDER_EMAIL }}
+            SENDER_PASSWORD: ${{ secrets.SENDER_PASSWORD }}
+          run: python main.py
+
+        - name: Commit updated papers.db
+          run: |
+            git config user.name "github-actions[bot]"
+            git config user.email "github-actions[bot]@users.noreply.github.com"
+            git add papers.db
+            git diff --staged --quiet || git commit -m "chore: update papers.db $(date -u +%Y-%m-%d)"
+            git push
