@@ -1,5 +1,6 @@
 .env
 *.db
+!papers.db
 logs/*.log
 logs/scheduler.log
 __pycache__/
