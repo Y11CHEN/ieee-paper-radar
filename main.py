@@ -20,6 +20,20 @@ logging.basicConfig(
 logger = logging.getLogger(__name__)
 
 
+class _ErrorCollector(logging.Handler):
+    """Captures ERROR-level log records so the email can surface failures
+    that are otherwise swallowed (IEEE fetch, Gemini calls)."""
+
+    def __init__(self) -> None:
+        super().__init__(level=logging.ERROR)
+        self.messages: list[str] = []
+
+    def emit(self, record: logging.LogRecord) -> None:
+        msg = record.getMessage()
+        if msg not in self.messages:
+            self.messages.append(msg)
+
+
 def _date_range(days_back: int) -> tuple[str, str]:
     end = datetime.today()
     start = end - timedelta(days=days_back)
@@ -47,6 +61,8 @@ def run_init() -> None:
 
 def run_weekly() -> None:
     logger.info("Starting weekly report")
+    errors = _ErrorCollector()
+    logging.getLogger().addHandler(errors)
     start_date, end_date = _date_range(config.LOOKBACK_DAYS)
 
     with sqlite3.connect(config.DB_PATH) as conn:
@@ -75,8 +91,10 @@ def run_weekly() -> None:
         trend_text=trend_text,
         db_stats={"total": total, "since": since_date},
         week_label=_week_label(),
+        errors=errors.messages,
     )
-    subject = f"[SC Research Weekly] {_week_label()} | {len(new_papers)} new paper(s)"
+    warn = "⚠️ " if errors.messages else ""
+    subject = f"{warn}[SC Research Weekly] {_week_label()} | {len(new_papers)} new paper(s)"
     send_email(
         html=html,
         subject=subject,

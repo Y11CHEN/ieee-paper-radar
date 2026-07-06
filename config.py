@@ -12,9 +12,17 @@ RECIPIENT_EMAILS: list[str] = [
     "ccsummerikk@gmail.com",
 ]
 
-# Papers must contain ALL required keywords AND at least one context keyword
-KEYWORDS_REQUIRED: list[str] = ["switched capacitor"]
-KEYWORDS_CONTEXT: list[str] = ["data center", "48V bus", "rack power", "server rack"]
+# Papers must contain at least ONE topic keyword (these are alternative
+# phrasings of the same subject). If KEYWORDS_CONTEXT is non-empty, papers must
+# ALSO contain at least one context keyword; leave it empty to track the whole
+# topic area without an application filter.
+KEYWORDS_TOPIC: list[str] = [
+    "switched capacitor",
+    "switched-capacitor",
+    "resonant switched capacitor",
+    "hybrid resonant converter",
+]
+KEYWORDS_CONTEXT: list[str] = []
 
 # IEEE venues to monitor (abbreviation → exact IEEE publication title)
 VENUES: dict[str, str] = {
