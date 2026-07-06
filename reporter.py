@@ -21,12 +21,28 @@ def _rec_group_html(papers: list[dict], label: str, color: str) -> str:
     return f'<p style="margin:12px 0 4px;font-weight:bold;color:{color};">{label}</p>{items}'
 
 
+def _error_banner_html(errors: list[str]) -> str:
+    if not errors:
+        return ""
+    items = "".join(f"<li>{html.escape(e)}</li>" for e in errors)
+    return (
+        '<div style="background:#fdecea;border-left:4px solid #c0392b;'
+        'padding:12px;margin-bottom:16px;">'
+        '<p style="margin:0 0 6px;font-weight:bold;color:#c0392b;">'
+        '&#9888; 本次运行有步骤失败，下面的内容可能不完整或缺失</p>'
+        f'<ul style="margin:0;padding-left:20px;font-size:12px;color:#a94442;">{items}</ul>'
+        '</div>'
+    )
+
+
 def build_email_html(
     new_papers: list[dict],
     trend_text: str,
     db_stats: dict,
     week_label: str,
+    errors: list[str] | None = None,
 ) -> str:
+    error_html = _error_banner_html(errors or [])
     must_read  = [p for p in new_papers if p.get("tier") == "强烈推荐"]
     worth_read = [p for p in new_papers if p.get("tier") == "值得一读"]
 
@@ -61,6 +77,8 @@ def build_email_html(
 <html>
 <body style="font-family:Arial,sans-serif;max-width:700px;margin:auto;color:#222;padding:20px;">
   <h2 style="color:#0057a8;">[SC Research Weekly] {week_label}</h2>
+
+  {error_html}
 
   {rec_html}
 

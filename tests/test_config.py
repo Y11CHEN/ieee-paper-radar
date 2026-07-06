@@ -15,9 +15,8 @@ def test_config_loads_required_keys(monkeypatch):
 
 def test_config_has_default_keywords():
     import config
-    assert "switched capacitor" in config.KEYWORDS_REQUIRED
-    assert "data center" in config.KEYWORDS_CONTEXT
-    assert "server rack" in config.KEYWORDS_CONTEXT
+    assert "switched capacitor" in config.KEYWORDS_TOPIC
+    assert isinstance(config.KEYWORDS_CONTEXT, list)
     assert config.LOOKBACK_DAYS == 14
     assert config.HISTORY_YEARS == 2
 

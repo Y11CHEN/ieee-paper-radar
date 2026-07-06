@@ -38,6 +38,28 @@ def test_build_email_html_no_papers():
     assert "No new papers" in html
 
 
+def test_build_email_html_shows_error_banner():
+    html = build_email_html(
+        new_papers=[],
+        trend_text="Trend analysis unavailable this week due to an API error.",
+        db_stats={"total": 10, "since": "2024-01-01"},
+        week_label="2026-W20",
+        errors=["IEEE Xplore fetch failed for TPEL: 403 Forbidden"],
+    )
+    assert "步骤失败" in html
+    assert "IEEE Xplore fetch failed for TPEL: 403 Forbidden" in html
+
+
+def test_build_email_html_no_banner_when_no_errors():
+    html = build_email_html(
+        new_papers=[],
+        trend_text="All good.",
+        db_stats={"total": 10, "since": "2024-01-01"},
+        week_label="2026-W20",
+    )
+    assert "步骤失败" not in html
+
+
 @patch("reporter.smtplib.SMTP")
 def test_send_email_calls_smtp(mock_smtp_class):
     mock_server = MagicMock()
