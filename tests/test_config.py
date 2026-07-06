@@ -17,7 +17,7 @@ def test_config_has_default_keywords():
     import config
     assert "switched capacitor" in config.KEYWORDS_TOPIC
     assert isinstance(config.KEYWORDS_CONTEXT, list)
-    assert config.LOOKBACK_DAYS == 14
+    assert config.LOOKBACK_DAYS == 30
     assert config.HISTORY_YEARS == 2
 
 
